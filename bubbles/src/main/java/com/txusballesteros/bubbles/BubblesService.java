@@ -27,16 +27,16 @@ package com.txusballesteros.bubbles;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.PixelFormat;
-import android.graphics.Point;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.provider.Settings;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.FrameLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,12 +114,14 @@ public class BubblesService extends Service {
     }
 
     private void addViewToWindow(final BubbleBaseLayout view) {
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-            @Override
-            public void run() {
-                getWindowManager().addView(view, view.getViewParams());
-            }
-        });
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(this))){
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    getWindowManager().addView(view, view.getViewParams());
+                }
+            });
+        }
     }
 
     private WindowManager.LayoutParams buildLayoutParamsForBubble(int x, int y) {
@@ -132,6 +134,13 @@ public class BubblesService extends Service {
         params.gravity = Gravity.TOP | Gravity.START;
         params.x = x;
         params.y = y;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            params.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            params.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
+        }
+
         return params;
     }
 
@@ -146,6 +155,11 @@ public class BubblesService extends Service {
                 PixelFormat.TRANSPARENT);
         params.x = x;
         params.y = y;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            params.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+        } else {
+            params.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
+        }
         return params;
     }
 
